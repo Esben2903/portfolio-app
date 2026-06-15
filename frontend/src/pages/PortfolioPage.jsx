@@ -9,7 +9,6 @@ import NavBar from "../components/NavBar";
 function PortfolioPage() {
   const [data, setData] = useState(null);
   const navigate = useNavigate();
-  const isMobile = window.innerWidth < 768;
 
   useEffect(() => {
     loadPortfolio();
@@ -32,16 +31,11 @@ function PortfolioPage() {
     <div style={{ minHeight: "100vh", padding: "30px 0", background: "radial-gradient(ellipse at top, #1a1a1a 0%, #0b0b0f 100%)", color: "#fff", fontFamily: "-apple-system, BlinkMacSystemFont, Inter, sans-serif" }}>
       <NavBar />
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "45px 24px 0" }}>
-        <h1 style={{ fontSize: isMobile ? "28px" : "40px", fontWeight: 500, marginBottom: "22px", textAlign: "center" }}>
+        <h1 style={{ fontSize: "40px", fontWeight: 500, marginBottom: "22px", textAlign: "center" }}>
           Portfolio
         </h1>
 
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
-          gap: "12px",
-          marginBottom: "18px",
-        }}>
+        <div className="stat-cards">
           <div>
             <StatCard
               title="Portfolio Value"
