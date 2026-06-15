@@ -24,16 +24,12 @@ app.add_middleware(
 # -----------------------
 # DATABASE
 # -----------------------
-DB_USER = "postgres"
-DB_PASSWORD = "project26"
-DB_HOST = "localhost"
-DB_PORT = "5432"
-DB_NAME = "data"
+import os
 
-DATABASE_URL = (
-    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}"
-    f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-)
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "postgresql+psycopg2://postgres:project26@localhost:5432/data"
+).replace("postgresql://", "postgresql+psycopg2://")
 
 engine = create_engine(DATABASE_URL)
 
