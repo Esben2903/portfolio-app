@@ -23,7 +23,6 @@ app.add_middleware(
 
 # -----------------------
 # DATABASE
-# -----------------------
 import os
 
 _db_url = os.environ.get("DATABASE_URL", "postgresql+psycopg2://postgres:project26@localhost:5432/data")
@@ -40,7 +39,6 @@ SessionLocal = sessionmaker(
     autoflush=False,
     bind=engine
 )
-
 # -----------------------
 # GET CURRENT USER
 # -----------------------
