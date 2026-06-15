@@ -6,14 +6,13 @@ function StatCard({ title, value, color }) {
         borderRadius: "14px",
         background: "rgba(255,255,255,0.04)",
         border: "1px solid rgba(255,255,255,0.06)",
-        minWidth: "180px",
+        width: "100%",
         backdropFilter: "blur(10px)",
       }}
     >
       <div style={{ fontSize: "12px", opacity: 0.6 }}>
         {title}
       </div>
-
       <div
         style={{
           fontSize: "18px",
