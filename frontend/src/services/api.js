@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000";
+const API_URL = "https://portfolio-app-production-b439.up.railway.app";
 
 // -------------------------
 // TOKEN
