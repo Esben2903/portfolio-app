@@ -9,6 +9,7 @@ import NavBar from "../components/NavBar";
 function PortfolioPage() {
   const [data, setData] = useState(null);
   const navigate = useNavigate();
+  const isMobile = window.innerWidth < 600;
 
   useEffect(() => {
     loadPortfolio();
@@ -31,19 +32,24 @@ function PortfolioPage() {
     <div style={{ minHeight: "100vh", padding: "30px 0", background: "radial-gradient(ellipse at top, #1a1a1a 0%, #0b0b0f 100%)", color: "#fff", fontFamily: "-apple-system, BlinkMacSystemFont, Inter, sans-serif" }}>
       <NavBar />
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "45px 24px 0" }}>
-        <h1 style={{ fontSize: "40px", fontWeight: 500, marginBottom: "22px", textAlign: "center" }}>
+        <h1 style={{ fontSize: isMobile ? "28px" : "40px", fontWeight: 500, marginBottom: "22px", textAlign: "center" }}>
           Portfolio
         </h1>
 
-        <div className="stat-cards">
-          <div className="stat-card">
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
+          gap: "12px",
+          marginBottom: "18px",
+        }}>
+          <div>
             <StatCard
               title="Portfolio Value"
               value={`${data.summary.total_market_value.toFixed(2)} €`}
             />
           </div>
 
-          <div className="stat-card" onClick={() => navigate("/realized")} style={{ cursor: "pointer" }}>
+          <div onClick={() => navigate("/realized")} style={{ cursor: "pointer" }}>
             <StatCard
               title="Realized"
               value={`${data.summary.total_realized_pnl.toFixed(2)} €`}
@@ -51,7 +57,7 @@ function PortfolioPage() {
             />
           </div>
 
-          <div className="stat-card">
+          <div>
             <StatCard
               title="Unrealized"
               value={`${data.summary.total_unrealized_pnl.toFixed(2)} €`}
@@ -59,7 +65,7 @@ function PortfolioPage() {
             />
           </div>
 
-          <div className="stat-card">
+          <div>
             <StatCard
               title="Total PnL"
               value={`${data.summary.total_pnl.toFixed(2)} €`}

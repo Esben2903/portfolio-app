@@ -9,6 +9,7 @@ const LINKS = [
 
 function NavBar() {
   const { pathname } = useLocation();
+  const isMobile = window.innerWidth < 600;
 
   return (
     <>
@@ -36,8 +37,9 @@ function NavBar() {
             <Link
               key={to}
               to={to}
-              className="nav-link"
               style={{
+                padding: isMobile ? "6px 10px" : "7px 18px",
+                fontSize: isMobile ? "11px" : "13px",
                 borderRadius: "10px",
                 fontWeight: 500,
                 textDecoration: "none",
@@ -67,8 +69,9 @@ function NavBar() {
       }}>
         <button
           onClick={logout}
-          className="nav-logout"
           style={{
+            padding: isMobile ? "6px 10px" : "7px 18px",
+            fontSize: isMobile ? "11px" : "13px",
             borderRadius: "10px",
             fontWeight: 500,
             border: "1px solid rgba(255,255,255,0.08)",
