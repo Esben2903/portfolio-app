@@ -26,10 +26,12 @@ app.add_middleware(
 # -----------------------
 import os
 
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    "postgresql+psycopg2://postgres:project26@localhost:5432/data"
-).replace("postgresql://", "postgresql+psycopg2://")
+_db_url = os.environ.get("DATABASE_URL", "postgresql+psycopg2://postgres:project26@localhost:5432/data")
+
+if _db_url.startswith("postgresql://"):
+    _db_url = _db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+
+DATABASE_URL = _db_url
 
 engine = create_engine(DATABASE_URL)
 
