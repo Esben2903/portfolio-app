@@ -25,7 +25,7 @@ app.add_middleware(
 # DATABASE
 import os
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql+psycopg2://postgres:project26@localhost:5432/data")
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql+psycopg2://postgres:project26@localhost:5432/data").strip()
 
 print(f"DATABASE_URL: {DATABASE_URL}")
 print(f"TEST_VAR: {os.environ.get('TEST_VAR', 'NOT FOUND')}")
