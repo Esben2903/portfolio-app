@@ -7,3 +7,51 @@
 body {
   background: #0b0b0f;
 }
+
+.stat-cards {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.stat-card {
+  min-width: 180px;
+  flex: 1;
+}
+
+.nav-link {
+  padding: 7px 18px;
+  font-size: 13px;
+}
+
+.nav-logout {
+  padding: 7px 18px;
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  .stat-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    justify-content: unset;
+  }
+
+  .stat-card {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .nav-link {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .nav-logout {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+}

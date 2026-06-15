@@ -12,23 +12,23 @@ function NavBar() {
 
   return (
     <>
-      {/* CENTER NAV */}
       <div style={{
         position: "fixed",
-        top: "16px",
+        top: "12px",
         left: "50%",
         transform: "translateX(-50%)",
         zIndex: 1000,
         display: "inline-flex",
         alignItems: "center",
-        gap: "4px",
-        padding: "6px",
+        gap: "2px",
+        padding: "4px",
         borderRadius: "16px",
         background: "rgba(255,255,255,0.04)",
         border: "1px solid rgba(255,255,255,0.08)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+        whiteSpace: "nowrap",
       }}>
         {LINKS.map(({ label, to }) => {
           const active = pathname === to;
@@ -36,10 +36,9 @@ function NavBar() {
             <Link
               key={to}
               to={to}
+              className="nav-link"
               style={{
-                padding: "7px 18px",
                 borderRadius: "10px",
-                fontSize: "13px",
                 fontWeight: 500,
                 textDecoration: "none",
                 color: active ? "#fff" : "rgba(255,255,255,0.45)",
@@ -60,19 +59,17 @@ function NavBar() {
         })}
       </div>
 
-      {/* LOGOUT RIGHT */}
       <div style={{
         position: "fixed",
-        top: "25px",
-        right: "50px",
+        top: "12px",
+        right: "12px",
         zIndex: 1000,
       }}>
         <button
           onClick={logout}
+          className="nav-logout"
           style={{
-            padding: "7px 18px",
             borderRadius: "10px",
-            fontSize: "13px",
             fontWeight: 500,
             border: "1px solid rgba(255,255,255,0.08)",
             cursor: "pointer",
