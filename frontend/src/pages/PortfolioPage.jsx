@@ -9,7 +9,7 @@ import NavBar from "../components/NavBar";
 function PortfolioPage() {
   const [data, setData] = useState(null);
   const navigate = useNavigate();
-  const isMobile = window.innerWidth < 600;
+  const isMobile = window.innerWidth < 768;
 
   useEffect(() => {
     loadPortfolio();

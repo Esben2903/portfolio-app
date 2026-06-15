@@ -9,7 +9,7 @@ const LINKS = [
 
 function NavBar() {
   const { pathname } = useLocation();
-  const isMobile = window.innerWidth < 600;
+  const isMobile = window.innerWidth < 768;
 
   return (
     <>
