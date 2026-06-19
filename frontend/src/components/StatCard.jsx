@@ -1,24 +1,26 @@
 function StatCard({ title, value, color }) {
   return (
     <div
+      className="stat-card-inner"
       style={{
-        padding: "14px 12px",
         borderRadius: "14px",
         background: "rgba(255,255,255,0.04)",
         border: "1px solid rgba(255,255,255,0.06)",
-        width: "100%",
         backdropFilter: "blur(10px)",
+        width: "100%",
+        overflow: "hidden",
       }}
     >
-      <div style={{ fontSize: "12px", opacity: 0.6 }}>
+      <div className="stat-card-title" style={{ opacity: 0.6, whiteSpace: "nowrap" }}>
         {title}
       </div>
       <div
+        className="stat-card-value"
         style={{
-          fontSize: "18px",
           fontWeight: 600,
           marginTop: "6px",
           color: color || "#fff",
+          whiteSpace: "nowrap",
         }}
       >
         {value}
