@@ -52,20 +52,23 @@ function PortfolioPage() {
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "45px 24px 0" }}>
 
         {loading && (
-          <div style={centerContent}>
-            <div
-              style={{
-                width: "28px",
-                height: "28px",
-                borderRadius: "50%",
-                border: "3px solid rgba(255,255,255,0.1)",
-                borderTopColor: "rgba(255,255,255,0.6)",
-                animation: "spin 0.8s linear infinite",
-              }}
-            />
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          </div>
-        )}
+  <div style={centerContent}>
+    <div
+      style={{
+        width: "28px",
+        height: "28px",
+        borderRadius: "50%",
+        border: "3px solid rgba(255,255,255,0.1)",
+        borderTopColor: "rgba(255,255,255,0.6)",
+        animation: "spin 0.8s linear infinite",
+      }}
+    />
+    <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)" }}>
+      Loading your portfolio...
+    </div>
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+  </div>
+)}
 
         {!loading && error && (
           <div style={centerContent}>
