@@ -4,10 +4,25 @@ import NavBar from "../components/NavBar";
 
 function TradesPage() {
   const [trades, setTrades] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getTrades().then(setTrades).catch(console.error);
+    loadTrades();
   }, []);
+
+  async function loadTrades() {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getTrades();
+      setTrades(result);
+    } catch (err) {
+      setError(err.message || "Failed to load trades");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const formatEUR = (value) =>
     new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(value);
@@ -55,12 +70,57 @@ function TradesPage() {
     cellLeft: { padding: "14px 16px", textAlign: "left", fontWeight: 600, borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)" },
   };
 
-  if (!trades) {
+  const screenWrapper = {
+    minHeight: "100vh",
+    background: "#0a0a0a",
+    color: "#fff",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: "Inter, system-ui, sans-serif",
+    gap: "16px",
+    padding: "24px",
+  };
+
+  if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Inter, system-ui, sans-serif" }}>
+      <div style={screenWrapper}>
         Loading...
       </div>
     );
+  }
+
+  if (error) {
+    return (
+      <div style={screenWrapper}>
+        <div style={{ fontSize: "16px", fontWeight: 500 }}>
+          Couldn't load trades
+        </div>
+        <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: "320px" }}>
+          {error}
+        </div>
+        <button
+          onClick={loadTrades}
+          style={{
+            padding: "10px 20px",
+            borderRadius: "12px",
+            border: "1px solid rgba(255,255,255,0.1)",
+            cursor: "pointer",
+            color: "#fff",
+            fontSize: "13px",
+            fontWeight: 500,
+            background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))",
+          }}
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  if (!trades) {
+    return null;
   }
 
   return (
