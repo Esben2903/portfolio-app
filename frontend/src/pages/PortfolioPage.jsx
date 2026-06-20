@@ -8,6 +8,8 @@ import NavBar from "../components/NavBar";
 
 function PortfolioPage() {
   const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,16 +17,69 @@ function PortfolioPage() {
   }, []);
 
   async function loadPortfolio() {
-    const result = await getPortfolio();
-    setData(result);
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getPortfolio();
+      setData(result);
+    } catch (err) {
+      setError(err.message || "Failed to load portfolio");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  if (!data) {
+  const screenWrapper = {
+    minHeight: "100vh",
+    background: "#0a0a0a",
+    color: "#fff",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: "Inter, system-ui, sans-serif",
+    gap: "16px",
+    padding: "24px",
+  };
+
+  if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Inter, system-ui, sans-serif" }}>
+      <div style={screenWrapper}>
         Loading...
       </div>
     );
+  }
+
+  if (error) {
+    return (
+      <div style={screenWrapper}>
+        <div style={{ fontSize: "16px", fontWeight: 500 }}>
+          Couldn't load your portfolio
+        </div>
+        <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", textAlign: "center", maxWidth: "320px" }}>
+          {error}
+        </div>
+        <button
+          onClick={loadPortfolio}
+          style={{
+            padding: "10px 20px",
+            borderRadius: "12px",
+            border: "1px solid rgba(255,255,255,0.1)",
+            cursor: "pointer",
+            color: "#fff",
+            fontSize: "13px",
+            fontWeight: 500,
+            background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))",
+          }}
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return null;
   }
 
   return (
