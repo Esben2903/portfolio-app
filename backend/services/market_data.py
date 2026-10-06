@@ -1,6 +1,12 @@
 import time
 import threading
-import yfinance as yf
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
+
+TWELVE_DATA_API_KEY = os.getenv("TWELVE_DATA_API_KEY")
 
 # -------------------------
 # CACHE
@@ -30,29 +36,30 @@ def get_fx_rate():
         return _fx_cache
 
     try:
-        fx_ticker = yf.Ticker("EURUSD=X")
+        response = requests.get(
+            "https://api.twelvedata.com/exchange_rate",
+            params={
+                "symbol": "EUR/USD",
+                "apikey": TWELVE_DATA_API_KEY
+            },
+            timeout=10
+        )
 
-        fx = None
+        data = response.json()
 
-        # HISTORY
-        hist = fx_ticker.history(period="1d")
+        if "rate" not in data:
+            print(f"❌ FX Error: {data}")
+            return 1.0
 
-        if hist is not None and not hist.empty:
-            fx = hist["Close"].iloc[-1]
-
-        # FALLBACK
-        if fx is None:
-            fx = 1.0
-
-        fx = float(fx)
+        fx = float(data["rate"])
 
         if fx <= 0:
-            fx = 1.0
+            return 1.0
 
         _fx_cache = fx
         _fx_time = now
 
-        return _fx_cache
+        return fx
 
     except Exception as e:
         print(f"❌ FX Error: {e}")
@@ -61,7 +68,6 @@ def get_fx_rate():
         _fx_time = now
 
         return _fx_cache
-
 
 # -------------------------
 # SINGLE PRICE
@@ -85,51 +91,30 @@ def get_live_price(ticker: str):
             return _cache[ticker]
 
     try:
+        response = requests.get(
+            "https://api.twelvedata.com/price",
+            params={
+                "symbol": ticker,
+                "apikey": TWELVE_DATA_API_KEY
+            },
+            timeout=10
+        )
 
-        stock = yf.Ticker(ticker)
+        data = response.json()
 
-        price = None
-
-        # -------------------------
-        # TRY INFO
-        # -------------------------
-        try:
-            info = stock.info
-
-            price = (
-                info.get("regularMarketPrice")
-                or info.get("currentPrice")
-            )
-
-        except Exception:
-            pass
-
-        # -------------------------
-        # FALLBACK HISTORY
-        # -------------------------
-        if price is None:
-
-            hist = stock.history(period="1d")
-
-            if hist is not None and not hist.empty:
-                price = hist["Close"].iloc[-1]
-
-        # -------------------------
-        # VALIDATION
-        # -------------------------
-        if price is None:
-            print(f"⚠️ No live price for {ticker}")
+        # CHECK FOR API ERROR
+        if "price" not in data:
+            print(f"⚠️ No price for {ticker}: {data}")
             return None
 
-        price = float(price)
+        price = float(data["price"])
 
+        # VALIDATION
         if price <= 0:
             print(f"⚠️ Invalid price for {ticker}: {price}")
             return None
 
-        # -------------------------
         # EUR CONVERSION
-        # -------------------------
         fx = get_fx_rate()
 
         if not fx or fx <= 0:
@@ -137,9 +122,7 @@ def get_live_price(ticker: str):
 
         price_eur = round(price / fx, 2)
 
-        # -------------------------
         # CACHE
-        # -------------------------
         with _lock:
             _cache[ticker] = price_eur
             _cache_time[ticker] = now
@@ -149,8 +132,7 @@ def get_live_price(ticker: str):
     except Exception as e:
         print(f"❌ Error fetching {ticker}: {e}")
         return None
-
-
+    
 # -------------------------
 # BATCH PORTFOLIO PRICES
 # -------------------------
@@ -188,83 +170,51 @@ def get_portfolio_prices(tickers):
                 missing.append(ticker)
 
     # -------------------------
-    # FETCH MISSING IN BATCH
+    # FETCH MISSING
     # -------------------------
-    if missing:
+    for ticker in missing:
 
         try:
-
-            data = yf.download(
-                tickers=missing,
-                period="1d",
-                interval="1m",
-                group_by="ticker",
-                auto_adjust=False,
-                progress=False,
-                threads=True
+            response = requests.get(
+                "https://api.twelvedata.com/price",
+                params={
+                    "symbol": ticker,
+                    "apikey": TWELVE_DATA_API_KEY
+                },
+                timeout=10
             )
 
+            data = response.json()
+
+            if "price" not in data:
+                print(f"⚠️ No price for {ticker}: {data}")
+                results[ticker] = None
+                continue
+
+            price = float(data["price"])
+
+            if price <= 0:
+                results[ticker] = None
+                continue
+
+            # EUR CONVERSION
             fx = get_fx_rate()
 
             if not fx or fx <= 0:
                 fx = 1.0
 
-            for ticker in missing:
+            price_eur = round(price / fx, 2)
 
-                try:
+            results[ticker] = price_eur
 
-                    price = None
-
-                    # MULTI TICKER
-                    if len(missing) > 1:
-
-                        if ticker in data:
-                            ticker_data = data[ticker]
-
-                            if (
-                                "Close" in ticker_data
-                                and not ticker_data["Close"].dropna().empty
-                            ):
-                                price = ticker_data["Close"].dropna().iloc[-1]
-
-                    # SINGLE TICKER
-                    else:
-
-                        if (
-                            "Close" in data
-                            and not data["Close"].dropna().empty
-                        ):
-                            price = data["Close"].dropna().iloc[-1]
-
-                    # VALIDATION
-                    if price is not None:
-
-                        price = float(price)
-
-                        if price > 0:
-
-                            price_eur = round(price / fx, 2)
-
-                            results[ticker] = price_eur
-
-                            with _lock:
-                                _cache[ticker] = price_eur
-                                _cache_time[ticker] = now
-
-                            continue
-
-                    results[ticker] = None
-
-                except Exception as e:
-                    print(f"⚠️ Batch parse error {ticker}: {e}")
-                    results[ticker] = None
+            # CACHE
+            with _lock:
+                _cache[ticker] = price_eur
+                _cache_time[ticker] = now
 
         except Exception as e:
-            print(f"❌ Batch download error: {e}")
-
-            # FALLBACK SINGLE FETCH
-            for ticker in missing:
-                results[ticker] = get_live_price(ticker)
+            print(f"❌ Error fetching {ticker}: {e}")
+            results[ticker] = None
 
     # ALWAYS RETURN KEYS
     for ticker in tickers:
