@@ -1,12 +1,7 @@
 import time
 import threading
-import os
-import requests
-from dotenv import load_dotenv
+import yfinance as yf
 
-load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
-
-TWELVE_DATA_API_KEY = os.getenv("TWELVE_DATA_API_KEY")
 
 # -------------------------
 # CACHE
@@ -14,8 +9,8 @@ TWELVE_DATA_API_KEY = os.getenv("TWELVE_DATA_API_KEY")
 _cache = {}
 _cache_time = {}
 
-_fx_cache = None
-_fx_time = 0
+_fx_cache = {}
+_fx_time = {}
 
 CACHE_TTL = 45
 FX_TTL = 3600
@@ -26,48 +21,70 @@ _lock = threading.Lock()
 # -------------------------
 # FX RATE
 # -------------------------
-def get_fx_rate():
-    global _fx_cache, _fx_time
+def get_fx_rate(from_currency: str, to_currency: str = "EUR"):
+    """
+    Get exchange rate from one currency to EUR.
 
+    Example:
+        USD -> EUR
+        SEK -> EUR
+    """
+
+    from_currency = from_currency.upper()
+    to_currency = to_currency.upper()
+
+    if from_currency == to_currency:
+        return 1.0
+
+    cache_key = f"{from_currency}_{to_currency}"
     now = time.time()
 
     # CACHE HIT
-    if _fx_cache is not None and now - _fx_time < FX_TTL:
-        return _fx_cache
+    with _lock:
+        if (
+            cache_key in _fx_cache
+            and cache_key in _fx_time
+            and now - _fx_time[cache_key] < FX_TTL
+        ):
+            return _fx_cache[cache_key]
 
     try:
-        response = requests.get(
-            "https://api.twelvedata.com/exchange_rate",
-            params={
-                "symbol": "EUR/USD",
-                "apikey": TWELVE_DATA_API_KEY
-            },
-            timeout=10
-        )
+        fx_ticker = yf.Ticker(f"{from_currency}{to_currency}=X")
+        rate = fx_ticker.fast_info["lastPrice"]
 
-        data = response.json()
+        rate = float(rate)
 
-        if "rate" not in data:
-            print(f"❌ FX Error: {data}")
+        if rate <= 0:
+            print(f"⚠️ Invalid FX rate {from_currency}/{to_currency}: {rate}")
             return 1.0
 
-        fx = float(data["rate"])
+        with _lock:
+            _fx_cache[cache_key] = rate
+            _fx_time[cache_key] = now
 
-        if fx <= 0:
-            return 1.0
-
-        _fx_cache = fx
-        _fx_time = now
-
-        return fx
+        return rate
 
     except Exception as e:
-        print(f"❌ FX Error: {e}")
+        print(f"❌ FX Error {from_currency}/{to_currency}: {e}")
+        return 1.0
 
-        _fx_cache = 1.0
-        _fx_time = now
 
-        return _fx_cache
+# -------------------------
+# CONVERT TO EUR
+# -------------------------
+def convert_to_eur(price: float, currency: str):
+    currency = currency.upper()
+
+    if currency == "EUR":
+        return round(price, 2)
+
+    fx = get_fx_rate(currency, "EUR")
+
+    if not fx or fx <= 0:
+        return round(price, 2)
+
+    return round(price * fx, 2)
+
 
 # -------------------------
 # SINGLE PRICE
@@ -91,36 +108,19 @@ def get_live_price(ticker: str):
             return _cache[ticker]
 
     try:
-        response = requests.get(
-            "https://api.twelvedata.com/price",
-            params={
-                "symbol": ticker,
-                "apikey": TWELVE_DATA_API_KEY
-            },
-            timeout=10
-        )
+        stock = yf.Ticker(ticker)
+        info = stock.fast_info
 
-        data = response.json()
-
-        # CHECK FOR API ERROR
-        if "price" not in data:
-            print(f"⚠️ No price for {ticker}: {data}")
-            return None
-
-        price = float(data["price"])
+        price = float(info["lastPrice"])
+        currency = info["currency"]
 
         # VALIDATION
         if price <= 0:
             print(f"⚠️ Invalid price for {ticker}: {price}")
             return None
 
-        # EUR CONVERSION
-        fx = get_fx_rate()
-
-        if not fx or fx <= 0:
-            fx = 1.0
-
-        price_eur = round(price / fx, 2)
+        # CONVERT TO EUR
+        price_eur = convert_to_eur(price, currency)
 
         # CACHE
         with _lock:
@@ -132,7 +132,8 @@ def get_live_price(ticker: str):
     except Exception as e:
         print(f"❌ Error fetching {ticker}: {e}")
         return None
-    
+
+
 # -------------------------
 # BATCH PORTFOLIO PRICES
 # -------------------------
@@ -148,7 +149,6 @@ def get_portfolio_prices(tickers):
     ))
 
     results = {}
-
     now = time.time()
 
     # -------------------------
@@ -175,35 +175,19 @@ def get_portfolio_prices(tickers):
     for ticker in missing:
 
         try:
-            response = requests.get(
-                "https://api.twelvedata.com/price",
-                params={
-                    "symbol": ticker,
-                    "apikey": TWELVE_DATA_API_KEY
-                },
-                timeout=10
-            )
+            stock = yf.Ticker(ticker)
+            info = stock.fast_info
 
-            data = response.json()
-
-            if "price" not in data:
-                print(f"⚠️ No price for {ticker}: {data}")
-                results[ticker] = None
-                continue
-
-            price = float(data["price"])
+            price = float(info["lastPrice"])
+            currency = info["currency"]
 
             if price <= 0:
+                print(f"⚠️ Invalid price for {ticker}: {price}")
                 results[ticker] = None
                 continue
 
-            # EUR CONVERSION
-            fx = get_fx_rate()
-
-            if not fx or fx <= 0:
-                fx = 1.0
-
-            price_eur = round(price / fx, 2)
+            # CONVERT TO EUR
+            price_eur = convert_to_eur(price, currency)
 
             results[ticker] = price_eur
 
